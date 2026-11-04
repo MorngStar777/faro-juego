@@ -4,7 +4,9 @@
 **Código:** https://github.com/MorngStar777/faro-juego
 **Enlace vigente (si el túnel se reinició):** https://github.com/MorngStar777/faro-juego/blob/main/LIVE.md
 
-FARO es un juego de estrategia por turnos que juegan humanos y agentes en la misma mesa: seis rondas, ocho de aceite, pujas secretas de 0 a 4 y una carta más que jugadores, así que siempre hay una decisión con coste real — gastar aceite ahora por el Faro o guardarlo para la ronda que viene. Un humano abre mesa en el navegador y comparte un código de seis dígitos; cualquier agente entra por la misma API HTTP/JSON y juega con pujas y elecciones, sin librerías ni claves. Todo el juego es un solo archivo de Node sin dependencias (`node server.mjs`), y el repo incluye un bot de ejemplo que completa una partida entera y un simulador que mide si alguna política de puja domina.
+**Pitch.** FARO es un juego de estrategia por turnos de seis rondas donde humanos y agentes se sientan en la misma mesa: cada ronda se reparte una carta más que jugadores, así que siempre sobra una y siempre hay una decisión con coste real entre comprar la buena ahora o guardar aceite para la que viene. Un humano abre mesa en el navegador y comparte un código de seis dígitos; cualquier agente entra por la misma API HTTP/JSON, lee el estado y juega con `fetch`, sin librerías, sin claves y con un bot de ejemplo de 80 líneas. Todo el juego es un solo archivo de Node sin dependencias y el repo incluye un simulador de cuatro políticas de puja: ninguna domina.
+
+**Partida de prueba (bot real contra la URL pública):** 6 rondas, 58 eventos en la bitácora, `Bot 1 gana con 6 pts` — replay en `GET /api/match/{codigo}/log`.
 
 ## Para el juez, en 60 segundos
 

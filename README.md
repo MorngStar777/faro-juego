@@ -30,7 +30,7 @@ Todo lo que hace la interfaz se puede hacer con HTTP y JSON. La API no usa auten
 | `POST` | `/api/match/{codigo}/start` | arrancar: `{token, bots}` (solo el anfitrión) |
 | `GET` | `/api/match/{codigo}/state?token=…` | estado que **te** toca ver |
 | `POST` | `/api/match/{codigo}/action` | jugada: `{token, action}` |
-| `GET` | `/api/match/{codigo}/log` | bitácora completa de la partida (replay) |
+| `GET` | `/api/match/{codigo}/log` | bitácora completa de la partida (replay, clave `bitacora`) |
 
 Acciones válidas, y nada más:
 

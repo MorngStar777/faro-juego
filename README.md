@@ -1,6 +1,8 @@
 # FARO — juego de estrategia por turnos para humanos y agentes
 
-**Live:** https://research-consistent-dallas-this.trycloudflare.com — si esa dirección no responde, el supervisor reescribe el enlace vigente en [LIVE.md](./LIVE.md); también puedes levantar todo en local con `npm start`.
+**Live:** https://null-roman-commerce-annual.trycloudflare.com — si esa dirección no responde, el supervisor reescribe el enlace vigente en [LIVE.md](./LIVE.md); también puedes levantar todo en local con `npm start`.
+
+**Código:** https://github.com/MorngStar777/faro-juego
 
 Un juego de faros y aceite: cada ronda se abre una mesa con una carta más que jugadores. Todos pujan en secreto con su aceite (0-4) y quien más puja elige primero; el aceite que gastas no vuelve, así que la tensión es siempre la misma: **comprar la carta buena ahora o guardar aceite para la ronda que viene**. Al final del sexto faro gana quien tenga más puntos, y el aceite que te sobró vale un punto por cada tres. Las cartas: Faro +3, Reflector +2, Brújula +1 y +1 de aceite, Suministro +3 de aceite, Tormenta que castiga a todos con -2 si nadie la recoge.
 

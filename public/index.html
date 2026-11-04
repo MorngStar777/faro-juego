@@ -1,0 +1,279 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>FARO — juego de estrategia para humanos y agentes</title>
+<style>
+  :root{
+    --tinta:#08131a; --mar:#0d2230; --mar2:#123243; --linea:#1d4a5e;
+    --luz:#ffd479; --luz2:#ffb02e; --espuma:#dff3f7; --tenue:#7fa7b8; --mal:#ff7a6b;
+    --fuente: ui-sans-serif, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:var(--fuente);color:var(--espuma);background:
+     radial-gradient(1200px 600px at 50% -10%, #1b4d63 0%, transparent 60%),
+     linear-gradient(180deg,#08131a 0%,#0a1a24 45%,#061016 100%);
+     min-height:100vh}
+  header{display:flex;align-items:center;gap:14px;padding:18px 22px;border-bottom:1px solid var(--linea)}
+  .faro{width:26px;height:26px;border-radius:50%;background:radial-gradient(circle at 50% 35%,#fff6d8,var(--luz2) 55%,#a8631a);box-shadow:0 0 24px 6px rgba(255,180,60,.35)}
+  h1{font-size:17px;letter-spacing:.22em;margin:0;font-weight:600}
+  header small{color:var(--tenue);letter-spacing:.06em}
+  main{max-width:1060px;margin:0 auto;padding:22px}
+  .panel{background:linear-gradient(180deg,rgba(18,50,67,.72),rgba(10,26,36,.72));border:1px solid var(--linea);border-radius:14px;padding:16px}
+  .fila{display:flex;gap:12px;flex-wrap:wrap;align-items:center}
+  button{font-family:inherit;font-size:14px;border-radius:10px;border:1px solid var(--linea);background:var(--mar2);color:var(--espuma);padding:9px 14px;cursor:pointer;transition:.15s}
+  button:hover:not(:disabled){border-color:var(--luz2);transform:translateY(-1px)}
+  button:disabled{opacity:.4;cursor:not-allowed}
+  button.oro{background:linear-gradient(180deg,var(--luz),var(--luz2));color:#2a1700;border-color:#e39b1f;font-weight:700}
+  input{font-family:inherit;font-size:14px;background:#0a1e29;border:1px solid var(--linea);color:var(--espuma);border-radius:10px;padding:9px 12px;width:100%}
+  .oculto{display:none !important}
+  #inicio{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  @media (max-width:760px){#inicio{grid-template-columns:1fr}}
+  h2{font-size:13px;letter-spacing:.16em;color:var(--tenue);text-transform:uppercase;margin:0 0 12px}
+  .reglas{font-size:13.5px;line-height:1.65;color:#b9d6e1}
+  .reglas b{color:var(--espuma)}
+  .mesa{display:flex;gap:12px;flex-wrap:wrap;margin:4px 0 18px}
+  .carta{width:132px;min-height:170px;border-radius:12px;padding:12px;position:relative;cursor:default;
+    background:linear-gradient(165deg,#f7f0dc,#e8dcbe);color:#1f2a1c;border:1px solid #cbb98d;
+    box-shadow:0 10px 24px rgba(0,0,0,.35);display:flex;flex-direction:column;justify-content:space-between}
+  .carta.tomable{cursor:pointer;outline:2px solid var(--luz2);outline-offset:2px;animation:latir 1.6s infinite}
+  .carta.tomable:hover{transform:translateY(-4px)}
+  @keyframes latir{0%,100%{box-shadow:0 10px 24px rgba(0,0,0,.35)}50%{box-shadow:0 10px 30px rgba(255,176,46,.45)}}
+  .carta .t{font-size:11px;letter-spacing:.14em;text-transform:uppercase;opacity:.6}
+  .carta .n{font-size:17px;font-weight:700;line-height:1.15}
+  .carta .x{font-size:11.5px;line-height:1.35;opacity:.75}
+  .carta.tormenta{background:linear-gradient(165deg,#3b2b3a,#241c26);color:#ffd9d2;border-color:#6d4356}
+  .carta.suministro{background:linear-gradient(165deg,#dcefe0,#c3ddc9);border-color:#9dbfa6}
+  .tablero{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px}
+  .jug{background:#0c212c;border:1px solid var(--linea);border-radius:12px;padding:12px}
+  .jug.turno{border-color:var(--luz2);box-shadow:0 0 0 1px var(--luz2) inset,0 0 18px rgba(255,176,46,.18)}
+  .jug .nom{font-weight:700;display:flex;justify-content:space-between;gap:8px;align-items:baseline}
+  .jug .pts{color:var(--luz);font-variant-numeric:tabular-nums}
+  .jug .sub{font-size:12px;color:var(--tenue);margin-top:6px;line-height:1.5}
+  .barra{height:4px;background:#08202b;border-radius:99px;overflow:hidden;margin:14px 0 4px}
+  .barra i{display:block;height:100%;background:linear-gradient(90deg,var(--luz2),var(--luz));transition:width .4s}
+  .aviso{font-size:13.5px;color:var(--luz);min-height:20px}
+  .bitacora{max-height:210px;overflow:auto;font-size:12.5px;color:#9fc0cd;line-height:1.6;font-variant-numeric:tabular-nums}
+  .bitacora b{color:var(--espuma)}
+  code{background:#07202b;border:1px solid var(--linea);border-radius:6px;padding:1px 6px;font-size:12.5px;color:#a8e6ff}
+  .puja{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+  .puja button{min-width:46px;font-variant-numeric:tabular-nums}
+  .nota{font-size:12px;color:var(--tenue);margin-top:10px;line-height:1.6}
+  .pie{margin-top:22px;font-size:12px;color:var(--tenue);text-align:center;line-height:1.7}
+  a{color:#a8e6ff}
+</style>
+</head>
+<body>
+<header>
+  <div class="faro"></div>
+  <div>
+    <h1>FARO</h1>
+    <small>estrategia por turnos · 2 a 4 jugadores · humanos y agentes en la misma mesa</small>
+  </div>
+</header>
+
+<main>
+  <!-- inicio -->
+  <section id="inicio">
+    <div class="panel">
+      <h2>Las reglas, en un minuto</h2>
+      <div class="reglas">
+        <p>Eres un farero compitiendo por la costa. Seis rondas. Cada ronda se abren <b>una carta más que jugadores</b> en la mesa y todos tenéis <b>8 unidades de aceite</b> para toda la partida.</p>
+        <p><b>1. Pujáis a la vez y en secreto.</b> Del 0 al 4 de aceite. Lo pagáis pase lo que pase.</p>
+        <p><b>2. Elegís en orden de puja.</b> El que más puso elige primero, y así hasta el último. Cada uno se lleva una carta.</p>
+        <p><b>3. Queda una carta en la mesa.</b> Si es una <b>Tormenta</b>, todos perdéis 2 puntos. Por eso conviene que alguien se la lleve… pero nadie quiere pagar por hacerlo.</p>
+        <p><b>Puntuación final:</b> puntos de las cartas + <b>1 punto por cada 3 de aceite</b> que te sobre. Gastar te da cartas; guardar te da puntos. Ahí está la tensión.</p>
+      </div>
+      <div class="nota">Un agente juega igual que tú: con HTTP y JSON. La API está en el <code>README.md</code> del repositorio, y hay un bot de ejemplo en <code>bot.mjs</code>.</div>
+    </div>
+
+    <div class="panel">
+      <h2>Sentarse a la mesa</h2>
+      <div class="fila" style="margin-bottom:10px">
+        <input id="nombre" placeholder="Tu nombre" maxlength="18">
+      </div>
+      <div class="fila" style="margin-bottom:16px">
+        <button class="oro" id="btnCrear">Crear mesa con bots</button>
+      </div>
+      <div class="fila" style="margin-bottom:16px">
+        <input id="codigo" placeholder="Código de 6 dígitos" inputmode="numeric" maxlength="6" style="flex:1;min-width:150px">
+        <button id="btnUnir">Unirme</button>
+      </div>
+      <div class="aviso" id="aviso"></div>
+      <div class="nota" id="enlace" style="word-break:break-all"></div>
+    </div>
+  </section>
+
+  <!-- partida -->
+  <section id="juego" class="oculto">
+    <div class="panel">
+      <div class="fila" style="justify-content:space-between;margin-bottom:6px">
+        <h2 id="cabecera" style="margin:0">Mesa</h2>
+        <div style="font-size:12px;color:var(--tenue)">código <b id="codigoMesa" style="color:var(--espuma)"></b></div>
+      </div>
+      <div class="barra"><i id="barra" style="width:100%"></i></div>
+      <div class="aviso" id="avisoJuego"></div>
+      <div class="mesa" id="mesa"></div>
+      <div class="puja" id="puja"></div>
+      <div class="tablero" id="tablero"></div>
+    </div>
+    <div class="panel" style="margin-top:14px">
+      <h2>Qué ha pasado</h2>
+      <div class="bitacora" id="bitacora"></div>
+    </div>
+  </section>
+
+  <div class="pie">
+    FARO · servidor de un solo archivo, sin dependencias · <span id="salud">…</span><br>
+    <span style="opacity:.7">Los agentes pueden jugar contra humanos y viceversa: mismo estado, mismas reglas, misma API.</span>
+  </div>
+</main>
+
+<script>
+const $ = (id) => document.getElementById(id);
+let codigo = null, token = null, ultimo = null, sondeo = null, pujadoEnRonda = 0;
+
+function guardar() {
+  if (codigo && token) sessionStorage.setItem("faro", JSON.stringify({ codigo, token }));
+}
+function recordar() {
+  try { const g = JSON.parse(sessionStorage.getItem("faro") || "null"); if (g) { codigo = g.codigo; token = g.token; entrar(); } } catch {}
+}
+
+async function api(ruta, cuerpo) {
+  const r = await fetch(ruta, {
+    method: cuerpo ? "POST" : "GET",
+    headers: { "content-type": "application/json" },
+    body: cuerpo ? JSON.stringify(cuerpo) : undefined,
+  });
+  const d = await r.json().catch(() => ({}));
+  if (!r.ok || d.ok === false) throw new Error(d.error || "Error " + r.status);
+  return d;
+}
+
+$("btnCrear").onclick = async () => {
+  try {
+    $("aviso").textContent = "Abriendo mesa…";
+    const nombre = $("nombre").value.trim() || "Anfitrión";
+    const d = await api("/api/match", { jugador: nombre, bots: 2, empezar: false });
+    codigo = d.codigo; token = d.token; guardar();
+    $("enlace").innerHTML = `Mesa <b>${codigo}</b> creada. Comparte: <code>${location.origin}/?mesa=${codigo}</code> · también puedes empezar ya contra dos bots.`;
+    entrar();
+  } catch (e) { $("aviso").textContent = e.message; }
+};
+
+$("btnUnir").onclick = async () => {
+  try {
+    const c = $("codigo").value.trim();
+    if (!/^\d{6}$/.test(c)) throw new Error("El código son 6 dígitos.");
+    const d = await api("/api/match/join", { codigo: c, jugador: $("nombre").value.trim() || "Invitado" });
+    codigo = d.codigo; token = d.token; guardar(); entrar();
+  } catch (e) { $("aviso").textContent = e.message; }
+};
+
+function entrar() {
+  $("inicio").classList.add("oculto");
+  $("juego").classList.remove("oculto");
+  $("codigoMesa").textContent = codigo;
+  if (sondeo) clearInterval(sondeo);
+  pintar();
+  sondeo = setInterval(pintar, 1200);
+}
+
+async function pintar() {
+  if (!codigo) return;
+  try {
+    const d = await api(`/api/match/${codigo}/state?token=${encodeURIComponent(token)}`);
+    ultimo = d.estado;
+    dibujar(ultimo);
+  } catch (e) {
+    $("avisoJuego").textContent = e.message;
+  }
+}
+
+async function actuar(accion) {
+  try {
+    const d = await api(`/api/match/${codigo}/action`, { token, action: accion });
+    ultimo = d.estado; dibujar(ultimo);
+  } catch (e) { $("avisoJuego").textContent = e.message; }
+}
+
+async function empezar() {
+  try { await api(`/api/match/${codigo}/start`, { token: token, bots: 2 }); pintar(); }
+  catch (e) { $("avisoJuego").textContent = e.message; }
+}
+
+function dibujar(s) {
+  $("cabecera").textContent = s.fase === "espera" ? "Sala de espera" :
+    s.fase === "fin" ? `Fin de la partida · gana ${s.ganador.nombre} (${s.ganador.puntaje} pts)` :
+    `Ronda ${s.ronda} de ${s.rondasTotales}`;
+
+  const total = s.fase === "puja" ? 45000 : 30000;
+  $("barra").style.width = (s.fase === "puja" || s.fase === "pick") ? Math.max(0, Math.min(100, (s.limiteMs / total) * 100)) + "%" : "0%";
+
+  let aviso = "";
+  if (s.fase === "espera") aviso = "Mesa abierta. Cuando estén todos, empieza la partida.";
+  else if (s.fase === "puja") aviso = s.vos?.esperandoPuja ? `Puja en secreto. Te quedan ${s.vos.aceite} de aceite.` : "Puja enviada. Esperando al resto…";
+  else if (s.fase === "pick") aviso = s.teToca ? "Te toca elegir carta." : "Otro jugador está eligiendo…";
+  else if (s.fase === "fin") aviso = s.ganador ? `Ganó ${s.ganador.nombre} con ${s.ganador.puntaje} puntos.` : "";
+  else if (s.evento) aviso = s.evento;
+  if (s.ultimo && s.fase !== "fin") aviso += (aviso ? " · " : "") + s.ultimo;
+  $("avisoJuego").textContent = aviso;
+
+  // mesa
+  const mesa = $("mesa");
+  mesa.innerHTML = "";
+  s.mesa.forEach((c) => {
+    const el = document.createElement("div");
+    el.className = "carta" + (c.tipo === "tormenta" ? " tormenta" : c.tipo === "suministro" ? " suministro" : "");
+    if (s.fase === "pick" && s.teToca) { el.classList.add("tomable"); el.onclick = () => actuar({ type: "pick", card: c.id }); }
+    el.innerHTML = `<div class="t">${c.tipo}</div><div class="n">${c.nombre}</div><div class="x">${c.texto}</div>`;
+    mesa.appendChild(el);
+  });
+  if (!s.mesa.length) mesa.innerHTML = `<div style="color:var(--tenue);font-size:13px">Sin cartas en la mesa.</div>`;
+
+  // pujas
+  const puja = $("puja");
+  puja.innerHTML = "";
+  if (s.fase === "puja" && s.vos?.esperandoPuja) {
+    for (let n = 0; n <= s.podesPujar; n++) {
+      const b = document.createElement("button");
+      b.textContent = `Pujar ${n}`;
+      if (n > 0) b.className = "oro";
+      b.onclick = () => actuar({ type: "bid", amount: n });
+      puja.appendChild(b);
+    }
+  } else if (s.fase === "espera" && s.jugadores.length >= 2) {
+    const b = document.createElement("button");
+    b.className = "oro"; b.textContent = "Empezar partida";
+    b.onclick = empezar;
+    puja.appendChild(b);
+  }
+
+  // jugadores
+  const tablero = $("tablero");
+  tablero.innerHTML = "";
+  s.jugadores.forEach((j) => {
+    const el = document.createElement("div");
+    el.className = "jug" + (j.turno ? " turno" : "");
+    const yo = s.vos && j.id === s.vos.id ? " (tú)" : "";
+    el.innerHTML = `<div class="nom"><span>${escapar(j.nombre)}${yo}${j.bot ? ' <span style="color:var(--tenue);font-size:11px">bot</span>' : ""}</span>
+      <span class="pts">${j.puntaje} pts</span></div>
+      <div class="sub">${j.puntos} de cartas · ${j.aceite} de aceite${j.puja !== null && j.puja !== undefined && s.fase === "puja" ? ` · puja ${typeof j.puja === "number" ? j.puja : "✓"}` : ""}</div>
+      <div class="sub" style="opacity:.7">${j.tomadas.length ? j.tomadas.join(" · ") : "sin cartas"}</div>`;
+    tablero.appendChild(el);
+  });
+  $("salud").textContent = `mesa ${s.codigo} · ${s.jugadores.length} jugadores · ronda ${s.ronda}`;
+}
+
+function escapar(t) { return String(t).replace(/[<>&]/g, (c) => ({ "<": "&lt;", ">": "&gt;", "&": "&amp;" }[c])); }
+
+fetch("/api/health").then((r) => r.json()).then((d) => { $("salud").textContent = d.ok ? "servidor en línea" : "servidor raro"; }).catch(() => { $("salud").textContent = "servidor sin respuesta"; });
+
+const enlaceMesa = new URLSearchParams(location.search).get("mesa");
+if (enlaceMesa) $("codigo").value = enlaceMesa;
+recordar();
+</script>
+</body>
+</html>

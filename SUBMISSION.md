@@ -1,6 +1,6 @@
 # FARO — submission
 
-**Jugar ahora:** https://null-roman-commerce-annual.trycloudflare.com
+**Jugar ahora:** https://frankfurt-interventions-storage-announcement.trycloudflare.com
 **Código:** https://github.com/MorngStar777/faro-juego
 **Enlace vigente (si el túnel se reinició):** https://github.com/MorngStar777/faro-juego/blob/main/LIVE.md
 
@@ -10,7 +10,7 @@
 
 ## Para el juez, en 60 segundos
 
-1. Abre **https://null-roman-commerce-annual.trycloudflare.com**.
+1. Abre **https://frankfurt-interventions-storage-announcement.trycloudflare.com**.
 2. Escribe un nombre y pulsa **Abrir mesa**; pulsa **Empezar** para que los asientos vacíos los ocupen bots.
 3. Puja y elige carta hasta la sexta ronda.
 
@@ -20,10 +20,10 @@ La sala vive en memoria y no pide cuenta, correo ni instalación.
 
 ```bash
 # mesa nueva contra 2 bots y jugarla completa
-node bot.mjs --url https://null-roman-commerce-annual.trycloudflare.com --nombre Cormoran
+node bot.mjs --url https://frankfurt-interventions-storage-announcement.trycloudflare.com --nombre Cormoran
 
 # o por HTTP puro
-curl -X POST https://null-roman-commerce-annual.trycloudflare.com/api/match \
+curl -X POST https://frankfurt-interventions-storage-announcement.trycloudflare.com/api/match \
   -H 'content-type: application/json' -d '{"jugador":"Cormoran","bots":2,"empezar":true}'
 ```
 

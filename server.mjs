@@ -5,11 +5,14 @@ import { randomUUID, randomInt } from "node:crypto";
 import { readFile } from "node:fs/promises";
 import { extname, join, normalize } from "node:path";
 
-const PORT = Number(process.env.PORT || 8080);
+const PORT = Number(process.env.PORT || 8099);
+const VERSION = "1.1.0";
+const ARRANQUE = Date.now();
 const RONDAS = 6;
 const ACEITE_INICIAL = 8;
 const TOKEN_BID = 45_000; // ms para ofertar
 const TOKEN_PICK = 30_000; // ms por elección
+const TOKEN_CIERRE = 3_000; // ms para ver qué pasó antes de la siguiente ronda
 const MAX_BID = 4;
 
 const CARTAS = {
@@ -34,10 +37,17 @@ function barajar(lista) {
 
 function nuevoMazo(numJugadores) {
   const total = RONDAS * (numJugadores + 1);
-  const baraja = [];
-  for (const [tipo, n] of Object.entries(MAZO)) for (let i = 0; i < n; i++) baraja.push({ tipo });
-  const mezcla = barajar(baraja);
-  return mezcla.slice(0, total);
+  // Un Faro garantizado por ronda: la carta más valiosa siempre está en juego,
+  // así ninguna ronda es plana y siempre hay algo por lo que pelear.
+  const faros = Array.from({ length: RONDAS }, () => ({ tipo: "faro" }));
+  const resto = [];
+  for (const [tipo, n] of Object.entries(MAZO)) {
+    if (tipo === "faro") continue;
+    for (let i = 0; i < n; i++) resto.push({ tipo });
+  }
+  // los faros extra vuelven a la mezcla del resto
+  for (let i = 0; i < MAZO.faro - RONDAS; i++) resto.push({ tipo: "faro" });
+  return barajar([...faros, ...barajar(resto).slice(0, total - RONDAS)]);
 }
 
 function crearPartida(nombre) {
@@ -55,6 +65,7 @@ function crearPartida(nombre) {
     limite: 0,
     evento: null,
     ultimo: null,
+    rondaCerradaEn: 0,
     bitacora: [],
     nombre: nombre || "Mesa",
   };
@@ -93,10 +104,11 @@ function iniciarRonda(p) {
 
 function cerrarPujas(p) {
   for (const j of p.jugadores) if (j.puja === null) j.puja = 0;
-  const base = p.ronda % Math.max(1, p.jugadores.length);
+  const n = p.jugadores.length;
+  const base = p.ronda % n;
   p.orden = [...p.jugadores].sort((a, b) => {
     if (b.puja !== a.puja) return b.puja - a.puja;
-    return ((a.id - base + 4) % 4) - ((b.id - base + 4) % 4);
+    return ((a.id - base + n) % n) - ((b.id - base + n) % n);
   });
   for (const j of p.jugadores) {
     j.aceite -= j.puja;
@@ -135,6 +147,7 @@ function cerrarRonda(p) {
     p.mesa = [];
   }
   p.fase = "ronda_cerrada";
+  p.rondaCerradaEn = Date.now();
   if (p.ronda >= RONDAS) {
     p.fase = "fin";
     p.ganador = [...p.jugadores].sort((a, b) => puntaje(b) - puntaje(a))[0].id;
@@ -210,7 +223,6 @@ function jugarBots(p) {
       let quiero = mejor >= 3 ? 3 : mejor >= 2 ? 2 : 1;
       if (p.ronda === RONDAS) quiero += 1; // última ronda: gastar no cuesta
       j.puja = Math.max(0, Math.min(quiero, MAX_BID, j.aceite));
-      p.bitacora.push({ tipo: "puja_bot", jugador: j.nombre, monto: j.puja });
     }
     if (p.fase === "pick" && p.orden[p.turnoPick]?.id === j.id && p.mesa.length) {
       const mejor = [...p.mesa].sort((a, b) => valorCarta(b, p) - valorCarta(a, p))[0];
@@ -232,8 +244,10 @@ function avanzarSiToca(p) {
     aplicarCarta(p, j, carta);
     avanzarPick(p);
   }
+  // la ronda se cierra y deja ver el evento (p. ej. una Tormenta) antes de
+  // abrir la siguiente: pausa breve, no un salto invisible.
   if (p.fase === "ronda_cerrada") {
-    if (p.ronda < RONDAS) iniciarRonda(p);
+    if (p.ronda < RONDAS && Date.now() >= (p.rondaCerradaEn || 0) + TOKEN_CIERRE) iniciarRonda(p);
   }
 }
 
@@ -245,7 +259,7 @@ function tick(p) {
 const MIME = { ".html": "text/html; charset=utf-8", ".js": "text/javascript; charset=utf-8", ".css": "text/css; charset=utf-8", ".md": "text/markdown; charset=utf-8", ".json": "application/json; charset=utf-8" };
 
 async function servirEstatico(res, ruta) {
-  const limpia = normalize(ruta).replace(/^(\.\.[/\\])+/, "");
+  const limpia = normalize(ruta).replace(/^(\\.\\.[/\\\\])+/, "");
   const archivo = join(process.cwd(), "public", limpia === "/" ? "index.html" : limpia);
   try {
     const datos = await readFile(archivo);
@@ -280,7 +294,9 @@ const servidor = http.createServer(async (req, res) => {
     return res.end();
   }
 
-  if (ruta === "/api/health") return json(res, { ok: true, juego: "faro", partidas: partidas.size });
+  if (ruta === "/api/health") {
+    return json(res, { ok: true, juego: "faro", version: VERSION, uptimeSeg: Math.floor((Date.now() - ARRANQUE) / 1000), partidas: partidas.size });
+  }
 
   if (ruta === "/api/match" && req.method === "POST") {
     const cuerpo = (await leerCuerpo(req)) || {};
@@ -349,7 +365,6 @@ const servidor = http.createServer(async (req, res) => {
       if (!Number.isInteger(monto) || monto < 0 || monto > MAX_BID) return error(res, 400, `La puja va de 0 a ${MAX_BID}.`);
       if (monto > j.aceite) return error(res, 400, "No tienes tanto aceite.");
       j.puja = monto;
-      p.bitacora.push({ tipo: "puja_hecha", jugador: j.nombre, monto });
     } else if (accion.type === "pick") {
       if (p.fase !== "pick") return error(res, 409, "No es momento de elegir carta.");
       if (p.orden[p.turnoPick]?.id !== j.id) return error(res, 409, "No es tu turno de elegir.");
@@ -373,4 +388,4 @@ const servidor = http.createServer(async (req, res) => {
 
 // los temporizadores solo avanzan cuando alguien consulta: sin proceso de fondo,
 // una partida abandonada no rompe nada.
-servidor.listen(PORT, () => console.log(`FARO escuchando en :${PORT}`));
+servidor.listen(PORT, "127.0.0.1", () => console.log(`FARO escuchando en 127.0.0.1:${PORT}`));

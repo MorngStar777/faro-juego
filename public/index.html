@@ -190,6 +190,27 @@ async function pintar() {
   } catch (e) {
     $("avisoJuego").textContent = e.message;
   }
+  pintarLog();
+}
+
+const NOMBRES_CARTA = { faro: "Faro", reflector: "Reflector", brujula: "Brújula", suministro: "Suministro", tormenta: "Tormenta" };
+
+async function pintarLog() {
+  if (!codigo) return;
+  try {
+    const d = await api(`/api/match/${codigo}/log`);
+    const el = $("bitacora");
+    if (!d.bitacora.length) { el.innerHTML = "Aún no hay nada que contar."; return; }
+    el.innerHTML = d.bitacora.slice(-20).reverse().map(formatear).join("");
+  } catch {}
+}
+
+function formatear(e) {
+  if (e.tipo === "puja")   return `<div>🔔 <b>${escapar(e.jugador)}</b> puja <b>${e.monto}</b> · queda con ${e.aceite} aceite</div>`;
+  if (e.tipo === "toma")   return `<div>🃏 <b>${escapar(e.jugador)}</b> se lleva <b>${NOMBRES_CARTA[e.carta] || e.carta}</b> · ${e.puntos} pts</div>`;
+  if (e.tipo === "evento") return `<div>⛈️ ${escapar(e.detalle)}</div>`;
+  if (e.tipo === "fin")    return `<div>🏆 Gana <b>${escapar(e.ganador)}</b></div>`;
+  return "";
 }
 
 async function actuar(accion) {

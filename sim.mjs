@@ -2,10 +2,12 @@
 // enfrentan en partidas reales por HTTP. No simula reglas por su cuenta: usa el
 // mismo servidor que juega un humano.
 //
-//   node sim.mjs                       # 40 partidas por pareja, puerto 8080
+//   node sim.mjs                       # 8 partidas por pareja (32 en total), puerto 8099
 //   N=15 FARO_URL=http://localhost:8099 node sim.mjs
-const BASE = process.env.FARO_URL || "http://localhost:8080";
-const N = Number(process.env.N || 40);
+// Nota: cada partida incluye una pausa de ~3 s entre rondas (para que el humano
+// vea el cierre), así que un N grande tarda un rato.
+const BASE = process.env.FARO_URL || "http://localhost:8099";
+const N = Number(process.env.N || 8);
 
 async function api(ruta, cuerpo) {
   const r = await fetch(BASE + ruta, {

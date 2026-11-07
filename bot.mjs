@@ -1,5 +1,5 @@
 // Bot de ejemplo: juega una partida completa de FARO por HTTP, sin librerías.
-//   node bot.mjs --url http://localhost:8080 --mesa 123456 --nombre Cormoran
+//   node bot.mjs --url http://localhost:8099 --mesa 123456 --nombre Cormoran
 // También sirve como plantilla para cualquier agente: todo es fetch + JSON.
 const args = Object.fromEntries(
   process.argv.slice(2).reduce((acc, a, i, arr) => {
@@ -7,7 +7,7 @@ const args = Object.fromEntries(
     return acc;
   }, [])
 );
-const URL_BASE = (args.url || process.env.FARO_URL || "http://localhost:8080").replace(/\/$/, "");
+const URL_BASE = (args.url || process.env.FARO_URL || "http://localhost:8099").replace(/\/$/, "");
 const NOMBRE = args.nombre || "Cormoran";
 
 const espera = (ms) => new Promise((r) => setTimeout(r, ms));
